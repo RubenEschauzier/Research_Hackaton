@@ -17,8 +17,8 @@ def parse_wiki_data():
     with open('data/wiki-rfa.txt', encoding="utf8") as f:
         j = 0
         i = 0
-        dict = {'\'\'\'': '', '--': '', 'ec}}': '', '{{ec}}': '', '\'\'\'\'\'': '', '\'\'\'\'': '', '}}':'', '{{':''}
-        dict2 = {'[[':'',']]':'', '[':'',']':''}
+        dict = {'\'\'\'': '', '--': '', 'ec}}': '', '{{ec}}': '', '\'\'\'\'\'': '', '\'\'\'\'': '', '}}': '', '{{': ''}
+        dict2 = {'[[': '', ']]': '', '[': '', ']': ''}
         for line in f:
             if line[0:3] == 'SRC':
                 users.append(line[4:len(line) - 1])
@@ -26,8 +26,14 @@ def parse_wiki_data():
             if line[0:3] == 'TGT':
                 up_for_election.append(line[4:len(line) - 1])
                 i += 1
-            if line[0:3] == 'RES':
-                result_election.append(int(line[4:len(line) - 1]))
+            if line[0:3] == 'VOT':
+                vote = int(line[4:len(line) - 1])
+                if vote == -1:
+                    result_election.append(0)
+                if vote == 0:
+                    result_election.append(1)
+                if vote == 1:
+                    result_election.append(2)
                 i += 1
             if line[0:3] == 'TXT':
                 strip_text = striphtml(re.sub(r'\'\'\'[^\'\'\']+\'\'\'', '', line[4:len(line) - 1]))
@@ -42,15 +48,12 @@ def parse_wiki_data():
                 strip_text = multiple_replace(dict2, strip_text)
 
                 text.append(strip_text)
-
                 i += 1
 
-            if i % 160000 == 0 and i > 1:
-                wiki_df = pd.DataFrame({'voter': users, 'subject': up_for_election,
-                                        'result': result_election, 'text': text})
-                print(wiki_df)
-                wiki_df.to_pickle('data/df_for_bert')
-                break
+    wiki_df = pd.DataFrame({'voter': users, 'subject': up_for_election,
+                            'result': result_election, 'text': text})
+    wiki_df = wiki_df.sample(frac=1).reset_index(drop=True)
+    wiki_df.to_pickle('data/df_for_bert_full')
 
 
 def replace_substring(data):
@@ -73,6 +76,7 @@ def replace_substring(data):
     except AttributeError:
         # AAA, ZZZ not found in the original string
         found = ''  # apply your error handling
+
 
 def striphtml(data):
     p = re.compile(r'<.*?>')

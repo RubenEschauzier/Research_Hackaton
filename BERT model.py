@@ -16,7 +16,7 @@ def process_text_data(data, tokenizer):
     max_len = max([len(i) for i in tokenized.values])
     padded = np.array([i + [0] * (max_len - len(i)) for i in tokenized.values])
     attention_mask = np.where(padded != 0, 1, 0)
-
+    print(attention_mask)
     attention_masks = torch.tensor(attention_mask)
     input_ids = torch.tensor(padded, dtype=torch.int64)
 
@@ -185,11 +185,11 @@ def train_model():
 
 
 if __name__ == '__main__':
-    df = pd.read_pickle('data/df_for_bert')
+    df = pd.read_pickle('data/df_for_bert_full')
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
     labels = torch.tensor(df['result'])
     input_ids, attention_masks = process_text_data(df, tokenizer)
-    dataset = TensorDataset(input_ids, attention_masks, labels)
+    dataset = TensorDataset(input_ids[1:100], attention_masks[1:100], labels[1:100])
 
     train_dl, val_dl = dataLoaders(dataset)
 
